@@ -1,13 +1,13 @@
-import React, { useState, useEffect } from "react";
-import { useAuth } from "@/context/AuthContext";
-import { useI18n } from "@/context/I18nContext";
-import { api } from "@/lib/api";
-import { Button } from "@/components/ui/Button";
-import { Card, CardContent } from "@/components/ui/Card";
-import { Badge } from "@/components/ui/Badge";
-import { Modal, ModalTitle, ModalDescription, ModalFooter } from "@/components/ui/Modal";
-import { Layout } from "@/components/Layout";
-import { BookOpen, Users, CheckCircle2 } from "lucide-react";
+import React, { useState, useEffect } from 'react';
+import { useAuth } from '@/context/AuthContext';
+import { useI18n } from '@/context/I18nContext';
+import { api } from '@/lib/api';
+import { Button } from '@/components/ui/Button';
+import { Card, CardContent } from '@/components/ui/Card';
+import { Badge } from '@/components/ui/Badge';
+import { Modal, ModalTitle, ModalDescription, ModalFooter } from '@/components/ui/Modal';
+import { Layout } from '@/components/Layout';
+import { BookOpen, Users, CheckCircle2, TrendingUp, Target, Sparkles } from 'lucide-react';
 
 interface Segment {
   id: string;
@@ -39,7 +39,7 @@ export function DashboardPage() {
 
   const fetchCycle = async () => {
     try {
-      const res = await api.get("/cycles/current");
+      const res = await api.get('/cycles/current');
       if (res.ok) {
         const data = await res.json();
         setCycle(data.cycle);
@@ -71,11 +71,11 @@ export function DashboardPage() {
   };
 
   const formatMonth = (monthKey: string) => {
-    const [year, month] = monthKey.split("-");
+    const [year, month] = monthKey.split('-');
     const date = new Date(parseInt(year), parseInt(month) - 1);
-    return date.toLocaleDateString(lang === "de" ? "de-DE" : "en-US", {
-      year: "numeric",
-      month: "long",
+    return date.toLocaleDateString(lang === 'de' ? 'de-DE' : 'en-US', {
+      year: 'numeric',
+      month: 'long',
     });
   };
 
@@ -84,28 +84,37 @@ export function DashboardPage() {
       const surahs = JSON.parse(json);
       return surahs
         .map((s: { number: number; name: string; nameEn: string; nameDe: string }) =>
-          lang === "de" ? `${s.number}. ${s.name}` : `${s.number}. ${s.nameEn}`
+          lang === 'de' ? `${s.number}. ${s.name}` : `${s.number}. ${s.nameEn}`,
         )
-        .join(", ");
+        .join(', ');
     } catch {
-      return "";
+      return '';
     }
   };
 
   const getJuzDisplay = (json: string) => {
     try {
       const juzs = JSON.parse(json);
-      return juzs.map((j: { number: number }) => j.number).join(", ");
+      return juzs.map((j: { number: number }) => j.number).join(', ');
     } catch {
-      return "";
+      return '';
     }
   };
+
+  // Compute stats
+  const totalSegments = cycle?.segments.length ?? 0;
+  const claimedSegments = cycle?.segments.filter((s) => s.claims.length > 0).length ?? 0;
+  const completedSegments = cycle?.segments.filter((s) => s.claims.some((c) => c.completedAt)).length ?? 0;
+  const progressPercent = totalSegments > 0 ? Math.round((completedSegments / totalSegments) * 100) : 0;
 
   if (loading) {
     return (
       <Layout>
         <div className="flex items-center justify-center py-20">
-          <p className="text-muted-foreground">{t.loading}</p>
+          <div className="flex flex-col items-center gap-3">
+            <div className="w-8 h-8 border-2 border-primary/30 border-t-primary rounded-full animate-spin" />
+            <p className="text-muted-foreground text-sm">{t.loading}</p>
+          </div>
         </div>
       </Layout>
     );
@@ -114,41 +123,94 @@ export function DashboardPage() {
   return (
     <Layout>
       <div className="space-y-6">
-        <div>
-          <h1 className="text-2xl font-bold">{t.dashboard}</h1>
-          {cycle && (
-            <p className="text-muted-foreground">
-              {t.currentMonth}: {formatMonth(cycle.monthKey)}
-            </p>
-          )}
+        {/* Page header */}
+        <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-2">
+          <div>
+            <h1 className="text-2xl font-bold">{t.dashboard}</h1>
+            {cycle && (
+              <p className="text-muted-foreground text-sm">
+                {t.currentMonth}: {formatMonth(cycle.monthKey)}
+              </p>
+            )}
+          </div>
         </div>
 
+        {/* Stats overview */}
+        {cycle && (
+          <div className="grid grid-cols-3 gap-3 animate-fade-in-up">
+            <Card className="hover:shadow-md">
+              <CardContent className="p-4 flex flex-col items-center text-center gap-1">
+                <Target className="h-5 w-5 text-primary mb-1" />
+                <span className="text-2xl font-bold">{claimedSegments}<span className="text-sm text-muted-foreground font-normal">/{totalSegments}</span></span>
+                <span className="text-xs text-muted-foreground">{t.claimed}</span>
+              </CardContent>
+            </Card>
+            <Card className="hover:shadow-md">
+              <CardContent className="p-4 flex flex-col items-center text-center gap-1">
+                <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 mb-1" />
+                <span className="text-2xl font-bold">{completedSegments}<span className="text-sm text-muted-foreground font-normal">/{totalSegments}</span></span>
+                <span className="text-xs text-muted-foreground">{t.completed}</span>
+              </CardContent>
+            </Card>
+            <Card className="hover:shadow-md">
+              <CardContent className="p-4 flex flex-col items-center text-center gap-1">
+                <TrendingUp className="h-5 w-5 text-primary mb-1" />
+                <span className="text-2xl font-bold">{progressPercent}%</span>
+                <span className="text-xs text-muted-foreground">Khatm</span>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Progress bar */}
+        {cycle && totalSegments > 0 && (
+          <div className="animate-fade-in-up stagger-1">
+            <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
+              <span>{completedSegments} / {totalSegments} {t.completed.toLowerCase()}</span>
+              <span>{progressPercent}%</span>
+            </div>
+            <div className="h-2 bg-secondary rounded-full overflow-hidden">
+              <div
+                className="h-full bg-gradient-to-r from-primary to-green-500 rounded-full transition-all duration-700 ease-out"
+                style={{ width: `${progressPercent}%` }}
+              />
+            </div>
+          </div>
+        )}
+
+        {/* Segments list */}
         {!cycle ? (
           <Card>
-            <CardContent className="py-10 text-center text-muted-foreground">
-              {t.noSegments}
-            </CardContent>
+            <CardContent className="py-10 text-center text-muted-foreground">{t.noSegments}</CardContent>
           </Card>
         ) : (
           <div className="grid gap-3">
-            {cycle.segments.map((segment) => {
+            {cycle.segments.map((segment, i) => {
               const isClaimedByMe = segment.claims.some((c) => c.user.id === user?.id);
               const isGloballyComplete = segment.claims.some((c) => c.completedAt);
 
               return (
-                <Card key={segment.id} className={isGloballyComplete ? "border-green-500/30" : ""}>
+                <Card
+                  key={segment.id}
+                  className={`animate-fade-in transition-all duration-300 hover:-translate-y-0.5 ${
+                    isGloballyComplete
+                      ? 'border-green-500/30 bg-green-50/30 dark:bg-green-950/10'
+                      : ''
+                  }`}
+                  style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
+                >
                   <CardContent className="p-4">
                     <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                      <div className="flex-1 space-y-1">
+                      <div className="flex-1 space-y-1.5 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
-                          <span className="font-semibold">
+                          <span className="font-semibold text-sm">
                             {t.segment} {segment.index + 1}
                           </span>
-                          <Badge variant="outline">
+                          <Badge variant="outline" className="text-[11px]">
                             {t.pages}: {segment.startPage}–{segment.endPage}
                           </Badge>
                           {isGloballyComplete && (
-                            <Badge variant="success">
+                            <Badge variant="success" className="text-[11px]">
                               <CheckCircle2 className="h-3 w-3 mr-1" />
                               {t.globallyComplete}
                             </Badge>
@@ -161,11 +223,10 @@ export function DashboardPage() {
                           {t.juz}: {getJuzDisplay(segment.juzSpanJson)}
                         </p>
                         {segment.claims.length > 0 && (
-                          <div className="flex items-center gap-1 text-xs text-muted-foreground">
-                            <Users className="h-3 w-3" />
-                            <span>
-                              {segment.claims.length} {t.claimed}:{" "}
-                              {segment.claims.map((c) => c.user.name).join(", ")}
+                          <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
+                            <Users className="h-3 w-3 flex-shrink-0" />
+                            <span className="truncate">
+                              {segment.claims.length} {t.claimed}: {segment.claims.map((c) => c.user.name).join(', ')}
                             </span>
                           </div>
                         )}
@@ -173,13 +234,10 @@ export function DashboardPage() {
 
                       <div className="flex-shrink-0">
                         {isClaimedByMe ? (
-                          <Badge variant="secondary">{t.alreadyClaimed}</Badge>
+                          <Badge variant="secondary" className="text-xs">{t.alreadyClaimed}</Badge>
                         ) : (
-                          <Button
-                            size="sm"
-                            onClick={() => setClaimModal(segment)}
-                          >
-                            <BookOpen className="h-4 w-4 mr-1" />
+                          <Button size="sm" onClick={() => setClaimModal(segment)} className="group">
+                            <BookOpen className="h-4 w-4 mr-1 transition-transform duration-200 group-hover:scale-110" />
                             {t.claimSegment}
                           </Button>
                         )}
@@ -195,21 +253,23 @@ export function DashboardPage() {
 
       {/* Claim Modal */}
       <Modal open={!!claimModal} onClose={() => setClaimModal(null)}>
-        <ModalTitle>{t.claimTitle}</ModalTitle>
-        <ModalDescription>
+        <div className="flex justify-center mb-3">
+          <div className="w-12 h-12 rounded-xl bg-primary/10 flex items-center justify-center">
+            <Sparkles className="h-6 w-6 text-primary" />
+          </div>
+        </div>
+        <ModalTitle className="text-center">{t.claimTitle}</ModalTitle>
+        <ModalDescription className="text-center">
           {claimModal &&
             t.claimWarning
-              .replace("{start}", String(claimModal.startPage))
-              .replace("{end}", String(claimModal.endPage))}
+              .replace('{start}', String(claimModal.startPage))
+              .replace('{end}', String(claimModal.endPage))}
         </ModalDescription>
         <ModalFooter>
           <Button variant="outline" onClick={() => setClaimModal(null)}>
             {t.cancel}
           </Button>
-          <Button
-            onClick={() => claimModal && handleClaim(claimModal)}
-            disabled={claiming}
-          >
+          <Button onClick={() => claimModal && handleClaim(claimModal)} disabled={claiming}>
             {claiming ? t.loading : t.claimConfirm}
           </Button>
         </ModalFooter>

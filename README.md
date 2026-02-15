@@ -16,16 +16,16 @@ A private Khatm management app for the **Stammtisch** group of **Haus Des Islam*
 
 ## Tech Stack
 
-| Layer | Tech |
-|-------|------|
-| Monorepo | pnpm workspaces |
-| Frontend | Vite + React + TypeScript + Tailwind |
-| Backend | Express + TypeScript |
-| Database | Prisma + SQLite |
-| Auth | bcrypt + JWT (HttpOnly cookie) |
-| Validation | Zod |
-| Email | Nodemailer |
-| Cron | node-cron |
+| Layer      | Tech                                 |
+| ---------- | ------------------------------------ |
+| Monorepo   | pnpm workspaces                      |
+| Frontend   | Vite + React + TypeScript + Tailwind |
+| Backend    | Express + TypeScript                 |
+| Database   | Prisma + SQLite                      |
+| Auth       | bcrypt + JWT (HttpOnly cookie)       |
+| Validation | Zod                                  |
+| Email      | Nodemailer                           |
+| Cron       | node-cron                            |
 
 ## Project Structure
 
@@ -72,6 +72,7 @@ pnpm dev
 ```
 
 This starts:
+
 - **API** on http://localhost:3001
 - **Web** on http://localhost:5173
 
@@ -79,24 +80,24 @@ This starts:
 
 #### apps/api/.env
 
-| Variable | Description | Default |
-|----------|-------------|---------|
-| `PORT` | API server port | `3001` |
-| `NODE_ENV` | Environment | `development` |
-| `JWT_SECRET` | Secret for JWT signing | (required) |
-| `DATABASE_URL` | SQLite path | `file:./dev.db` |
-| `ADMIN_EMAILS` | Comma-separated admin emails | `admin@example.com` |
-| `APP_URL` | Frontend URL (for CORS + emails) | `http://localhost:5173` |
-| `SMTP_HOST` | SMTP server host | (optional, logs if missing) |
-| `SMTP_PORT` | SMTP port | `587` |
-| `SMTP_USER` | SMTP username | (optional) |
-| `SMTP_PASS` | SMTP password | (optional) |
-| `SMTP_FROM` | From address | `noreply@stammkhatm.de` |
+| Variable       | Description                      | Default                     |
+| -------------- | -------------------------------- | --------------------------- |
+| `PORT`         | API server port                  | `3001`                      |
+| `NODE_ENV`     | Environment                      | `development`               |
+| `JWT_SECRET`   | Secret for JWT signing           | (required)                  |
+| `DATABASE_URL` | SQLite path                      | `file:./dev.db`             |
+| `ADMIN_EMAILS` | Comma-separated admin emails     | `admin@example.com`         |
+| `APP_URL`      | Frontend URL (for CORS + emails) | `http://localhost:5173`     |
+| `SMTP_HOST`    | SMTP server host                 | (optional, logs if missing) |
+| `SMTP_PORT`    | SMTP port                        | `587`                       |
+| `SMTP_USER`    | SMTP username                    | (optional)                  |
+| `SMTP_PASS`    | SMTP password                    | (optional)                  |
+| `SMTP_FROM`    | From address                     | `noreply@stammkhatm.de`     |
 
 #### apps/web/.env
 
-| Variable | Description | Default |
-|----------|-------------|---------|
+| Variable       | Description  | Default                 |
+| -------------- | ------------ | ----------------------- |
 | `VITE_API_URL` | API base URL | `http://localhost:3001` |
 
 ## Deployment (Render)
@@ -121,6 +122,7 @@ This starts:
 ## API Routes
 
 ### Auth
+
 - `POST /auth/register` – Register with name, email, password
 - `POST /auth/verify-otp` – Verify email with 6-digit OTP
 - `POST /auth/login` – Login with email + password
@@ -128,11 +130,13 @@ This starts:
 - `GET /me` – Get current user
 
 ### Data
+
 - `GET /cycles/current` – Get current month's cycle + segments
 - `POST /segments/:id/claim` – Claim a segment
 - `POST /claims/:id/complete` – Mark claim as complete
 
 ### Admin (whitelist-protected)
+
 - `GET /admin/settings` – Get app settings
 - `PUT /admin/settings` – Update settings
 - `POST /admin/cycle/regenerate` – Regenerate current month's segments

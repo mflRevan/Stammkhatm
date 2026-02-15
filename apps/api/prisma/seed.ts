@@ -1,12 +1,30 @@
-import { PrismaClient } from "@prisma/client";
-import { getSurahsForPageRange, getJuzsForPageRange } from "@stammkhatm/shared";
+import { PrismaClient } from '@prisma/client';
+import { getSurahsForPageRange, getJuzsForPageRange } from '@stammkhatm/shared';
+import { readFileSync } from 'fs';
+import { resolve, dirname } from 'path';
+import { fileURLToPath } from 'url';
 
 const prisma = new PrismaClient();
+
+const __filename = fileURLToPath(import.meta.url);
+const __dirname = dirname(__filename);
+
+function loadAdminWhitelist(): string[] {
+  try {
+    const jsonPath = resolve(__dirname, 'admins.json');
+    const raw = readFileSync(jsonPath, 'utf-8');
+    const emails: string[] = JSON.parse(raw);
+    return emails.map((e) => e.trim().toLowerCase()).filter(Boolean);
+  } catch {
+    console.log('⚠️  admins.json not found or invalid, skipping JSON whitelist');
+    return [];
+  }
+}
 
 function getCurrentMonthKey(): string {
   const now = new Date();
   const y = now.getUTCFullYear();
-  const m = String(now.getUTCMonth() + 1).padStart(2, "0");
+  const m = String(now.getUTCMonth() + 1).padStart(2, '0');
   return `${y}-${m}`;
 }
 
@@ -28,7 +46,7 @@ function generateSegments(totalPages: number, segmentsPerMonth: number) {
 }
 
 async function main() {
-  console.log("🌱 Seeding database...");
+  console.log('🌱 Seeding database...');
 
   // 1. Upsert Settings singleton
   await prisma.settings.upsert({
@@ -39,18 +57,20 @@ async function main() {
       totalPages: 604,
       segmentsPerMonth: 30,
       reminderIntervalDays: 7,
-      timezone: "Europe/Berlin",
-      appUrl: process.env.APP_URL || "http://localhost:5173",
+      timezone: 'Europe/Berlin',
+      appUrl: process.env.APP_URL || 'http://localhost:5173',
     },
   });
-  console.log("✅ Settings created");
+  console.log('✅ Settings created');
 
-  // 2. Insert admin emails
-  const adminEmailsRaw = process.env.ADMIN_EMAILS || "";
-  const adminEmails = adminEmailsRaw
-    .split(",")
+  // 2. Insert admin emails (merge JSON whitelist + env variable)
+  const adminEmailsRaw = process.env.ADMIN_EMAILS || '';
+  const envAdmins = adminEmailsRaw
+    .split(',')
     .map((e) => e.trim().toLowerCase())
     .filter(Boolean);
+  const jsonAdmins = loadAdminWhitelist();
+  const adminEmails = [...new Set([...jsonAdmins, ...envAdmins])];
 
   for (const email of adminEmails) {
     await prisma.admin.upsert({
@@ -87,7 +107,7 @@ async function main() {
               name: s.name,
               nameEn: s.nameEn,
               nameDe: s.nameDe,
-            }))
+            })),
           ),
           juzSpanJson: JSON.stringify(juzs.map((j) => ({ number: j.number }))),
         },
@@ -98,7 +118,7 @@ async function main() {
     console.log(`ℹ️  Cycle ${monthKey} already exists, skipping`);
   }
 
-  console.log("🌱 Seed complete!");
+  console.log('🌱 Seed complete!');
 }
 
 main()

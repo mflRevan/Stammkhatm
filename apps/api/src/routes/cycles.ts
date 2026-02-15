@@ -1,14 +1,14 @@
-import { Router, Request, Response } from "express";
-import { prisma } from "../db.js";
-import { authMiddleware } from "../auth.js";
+import { Router, Request, Response } from 'express';
+import { prisma } from '../db.js';
+import { authMiddleware } from '../auth.js';
 
-const router = Router();
+const router: Router = Router();
 
 // GET /cycles/current
-router.get("/current", async (_req: Request, res: Response) => {
+router.get('/current', async (_req: Request, res: Response) => {
   try {
     const now = new Date();
-    const monthKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, "0")}`;
+    const monthKey = `${now.getUTCFullYear()}-${String(now.getUTCMonth() + 1).padStart(2, '0')}`;
 
     const cycle = await prisma.cycle.findUnique({
       where: { monthKey },
@@ -21,33 +21,33 @@ router.get("/current", async (_req: Request, res: Response) => {
               },
             },
           },
-          orderBy: { index: "asc" },
+          orderBy: { index: 'asc' },
         },
       },
     });
 
     if (!cycle) {
-      res.status(404).json({ error: "No cycle found for this month" });
+      res.status(404).json({ error: 'No cycle found for this month' });
       return;
     }
 
     res.json({ cycle });
   } catch (err) {
-    console.error("Get current cycle error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Get current cycle error:', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // POST /segments/:id/claim
-router.post("/:id/claim", authMiddleware, async (req: Request, res: Response) => {
+router.post('/:id/claim', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const segmentId = req.params.id;
-    const userId = req.userId!;
+    const segmentId = req.params.id as string;
+    const userId = req.userId as string;
 
     // Check segment exists
     const segment = await prisma.segment.findUnique({ where: { id: segmentId } });
     if (!segment) {
-      res.status(404).json({ error: "Segment not found" });
+      res.status(404).json({ error: 'Segment not found' });
       return;
     }
 
@@ -56,7 +56,7 @@ router.post("/:id/claim", authMiddleware, async (req: Request, res: Response) =>
       where: { userId_segmentId: { userId, segmentId } },
     });
     if (existing) {
-      res.status(409).json({ error: "You already claimed this segment" });
+      res.status(409).json({ error: 'You already claimed this segment' });
       return;
     }
 
@@ -66,28 +66,28 @@ router.post("/:id/claim", authMiddleware, async (req: Request, res: Response) =>
 
     res.status(201).json({ claim });
   } catch (err) {
-    console.error("Claim error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Claim error:', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 
 // POST /claims/:id/complete
-router.post("/claims/:id/complete", authMiddleware, async (req: Request, res: Response) => {
+router.post('/claims/:id/complete', authMiddleware, async (req: Request, res: Response) => {
   try {
-    const claimId = req.params.id;
-    const userId = req.userId!;
+    const claimId = req.params.id as string;
+    const userId = req.userId as string;
 
     const claim = await prisma.claim.findUnique({ where: { id: claimId } });
     if (!claim) {
-      res.status(404).json({ error: "Claim not found" });
+      res.status(404).json({ error: 'Claim not found' });
       return;
     }
     if (claim.userId !== userId) {
-      res.status(403).json({ error: "Not your claim" });
+      res.status(403).json({ error: 'Not your claim' });
       return;
     }
     if (claim.completedAt) {
-      res.status(409).json({ error: "Already completed" });
+      res.status(409).json({ error: 'Already completed' });
       return;
     }
 
@@ -98,8 +98,8 @@ router.post("/claims/:id/complete", authMiddleware, async (req: Request, res: Re
 
     res.json({ claim: updated });
   } catch (err) {
-    console.error("Complete error:", err);
-    res.status(500).json({ error: "Internal server error" });
+    console.error('Complete error:', err);
+    res.status(500).json({ error: 'Internal server error' });
   }
 });
 

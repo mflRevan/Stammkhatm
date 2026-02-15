@@ -1,4 +1,4 @@
-import { z } from "zod";
+import { z } from 'zod';
 
 // ── Auth Schemas ──
 export const registerSchema = z.object({
@@ -22,8 +22,8 @@ export const settingsSchema = z.object({
   totalPages: z.number().int().min(1).default(604),
   segmentsPerMonth: z.number().int().min(1).max(604).default(30),
   reminderIntervalDays: z.number().int().min(1).default(7),
-  timezone: z.string().default("Europe/Berlin"),
-  appUrl: z.string().url().default("http://localhost:5173"),
+  timezone: z.string().default('Europe/Berlin'),
+  appUrl: z.string().url().default('http://localhost:5173'),
 });
 
 export type RegisterInput = z.infer<typeof registerSchema>;

@@ -1,14 +1,14 @@
-import React from "react";
-import { Routes, Route, Navigate } from "react-router-dom";
-import { useAuth } from "@/context/AuthContext";
-import { LandingPage } from "@/pages/LandingPage";
-import { RegisterPage } from "@/pages/RegisterPage";
-import { VerifyOtpPage } from "@/pages/VerifyOtpPage";
-import { LoginPage } from "@/pages/LoginPage";
-import { DashboardPage } from "@/pages/DashboardPage";
-import { MySegmentsPage } from "@/pages/MySegmentsPage";
-import { AdminPage } from "@/pages/AdminPage";
-import { SettingsPage } from "@/pages/SettingsPage";
+import React from 'react';
+import { Routes, Route, Navigate } from 'react-router-dom';
+import { useAuth } from '@/context/AuthContext';
+import { LandingPage } from '@/pages/LandingPage';
+import { RegisterPage } from '@/pages/RegisterPage';
+import { VerifyOtpPage } from '@/pages/VerifyOtpPage';
+import { LoginPage } from '@/pages/LoginPage';
+import { DashboardPage } from '@/pages/DashboardPage';
+import { MySegmentsPage } from '@/pages/MySegmentsPage';
+import { AdminPage } from '@/pages/AdminPage';
+import { SettingsPage } from '@/pages/SettingsPage';
 
 function ProtectedRoute({ children }: { children: React.ReactNode }) {
   const { user, loading } = useAuth();

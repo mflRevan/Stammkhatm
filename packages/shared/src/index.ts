@@ -1,2 +1,2 @@
-export * from "./quran-data";
-export * from "./schemas";
+export * from './quran-data';
+export * from './schemas';

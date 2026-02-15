@@ -1,5 +1,5 @@
-import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from "react";
-import { api } from "../lib/api";
+import React, { createContext, useContext, useState, useEffect, ReactNode, useCallback } from 'react';
+import { api } from '../lib/api';
 
 interface User {
   id: string;
@@ -36,7 +36,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const refresh = useCallback(async () => {
     try {
-      const res = await api.get("/me");
+      const res = await api.get('/me');
       if (res.ok) {
         const data = await res.json();
         setUser(data.user);
@@ -59,42 +59,42 @@ export function AuthProvider({ children }: { children: ReactNode }) {
 
   const login = async (email: string, password: string) => {
     try {
-      const res = await api.post("/auth/login", { email, password });
+      const res = await api.post('/auth/login', { email, password });
       const data = await res.json();
-      if (!res.ok) return { error: data.error || "Login failed" };
+      if (!res.ok) return { error: data.error || 'Login failed' };
       setUser(data.user);
       setIsAdmin(data.isAdmin);
       return {};
     } catch {
-      return { error: "Network error" };
+      return { error: 'Network error' };
     }
   };
 
   const register = async (name: string, email: string, password: string) => {
     try {
-      const res = await api.post("/auth/register", { name, email, password });
+      const res = await api.post('/auth/register', { name, email, password });
       const data = await res.json();
-      if (!res.ok) return { error: data.error || "Registration failed" };
+      if (!res.ok) return { error: data.error || 'Registration failed' };
       return { email: data.email };
     } catch {
-      return { error: "Network error" };
+      return { error: 'Network error' };
     }
   };
 
   const verifyOtp = async (email: string, code: string) => {
     try {
-      const res = await api.post("/auth/verify-otp", { email, code });
+      const res = await api.post('/auth/verify-otp', { email, code });
       const data = await res.json();
-      if (!res.ok) return { error: data.error || "Verification failed" };
+      if (!res.ok) return { error: data.error || 'Verification failed' };
       setUser(data.user);
       return {};
     } catch {
-      return { error: "Network error" };
+      return { error: 'Network error' };
     }
   };
 
   const logout = async () => {
-    await api.post("/auth/logout", {});
+    await api.post('/auth/logout', {});
     setUser(null);
     setIsAdmin(false);
   };
