@@ -10,9 +10,21 @@ const app = express();
 const PORT = parseInt(process.env.PORT || '3001', 10);
 
 // Middleware
+const appUrl = process.env.APP_URL || 'http://localhost:5173';
+const appUrls = (process.env.APP_URLS || '')
+  .split(',')
+  .map((s) => s.trim())
+  .filter(Boolean);
+const allowAllOrigins = appUrl === '*';
+const allowedOrigins = [appUrl, ...appUrls].filter(Boolean);
+
 app.use(
   cors({
-    origin: process.env.APP_URL || 'http://localhost:5173',
+    origin: (origin, callback) => {
+      if (!origin || allowAllOrigins) return callback(null, true);
+      if (allowedOrigins.includes(origin)) return callback(null, true);
+      return callback(new Error(`CORS blocked: ${origin}`));
+    },
     credentials: true,
   }),
 );
