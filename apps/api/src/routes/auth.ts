@@ -29,7 +29,7 @@ function cookieOptions(isProduction: boolean) {
   return {
     httpOnly: true,
     secure: isProduction,
-    sameSite: (isProduction ? 'none' : 'lax') as 'none' | 'lax',
+    sameSite: 'lax' as const,
     maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
     path: '/',
   };

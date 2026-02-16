@@ -25,16 +25,11 @@ export function Layout({ children }: { children: React.ReactNode }) {
       {/* Header */}
       <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur-md supports-[backdrop-filter]:bg-card/60">
         <div className="w-full max-w-5xl mx-auto flex h-14 items-center justify-between px-4 sm:px-6">
-          <Link
-            to="/dashboard"
-            className="flex items-center gap-2.5 font-bold text-lg group"
-          >
+          <Link to="/dashboard" className="flex items-center gap-2.5 font-bold text-lg group">
             <span className="text-primary font-serif text-xl transition-transform duration-300 group-hover:scale-110">
               ق
             </span>
-            <span className="transition-colors duration-200 group-hover:text-primary">
-              {t.appName}
-            </span>
+            <span className="transition-colors duration-200 group-hover:text-primary">{t.appName}</span>
           </Link>
 
           {user && (
@@ -53,7 +48,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
                           : 'text-muted-foreground hover:text-foreground hover:bg-accent/50'
                       }`}
                     >
-                      <item.icon className={`h-4 w-4 transition-transform duration-200 ${isActive ? '' : 'group-hover:scale-110'}`} />
+                      <item.icon
+                        className={`h-4 w-4 transition-transform duration-200 ${isActive ? '' : 'group-hover:scale-110'}`}
+                      />
                       {item.label}
                     </Link>
                   );
@@ -61,12 +58,22 @@ export function Layout({ children }: { children: React.ReactNode }) {
               </nav>
 
               <div className="hidden md:flex items-center gap-2">
-                <Button variant="ghost" size="icon" onClick={toggleTheme} className="transition-all duration-200 hover:rotate-12">
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={toggleTheme}
+                  className="transition-all duration-200 hover:rotate-12"
+                >
                   {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 </Button>
                 <div className="h-4 w-px bg-border mx-1" />
                 <span className="text-sm text-muted-foreground">{user.name}</span>
-                <Button variant="ghost" size="sm" onClick={logout} className="text-muted-foreground hover:text-destructive transition-colors duration-200">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={logout}
+                  className="text-muted-foreground hover:text-destructive transition-colors duration-200"
+                >
                   <LogOut className="h-4 w-4 mr-1" />
                   {t.logout}
                 </Button>
@@ -107,7 +114,12 @@ export function Layout({ children }: { children: React.ReactNode }) {
                 <Button variant="ghost" size="icon" onClick={toggleTheme}>
                   {theme === 'dark' ? <Sun className="h-4 w-4" /> : <Moon className="h-4 w-4" />}
                 </Button>
-                <Button variant="ghost" size="sm" onClick={logout} className="text-muted-foreground hover:text-destructive">
+                <Button
+                  variant="ghost"
+                  size="sm"
+                  onClick={logout}
+                  className="text-muted-foreground hover:text-destructive"
+                >
                   <LogOut className="h-4 w-4" />
                 </Button>
               </div>

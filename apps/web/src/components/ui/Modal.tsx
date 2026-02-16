@@ -12,10 +12,7 @@ export function Modal({ open, onClose, children }: ModalProps) {
 
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center">
-      <div
-        className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-fade-in"
-        onClick={onClose}
-      />
+      <div className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
       <div className="relative z-50 w-full max-w-md mx-4 rounded-xl bg-card p-6 shadow-xl border animate-scale-in">
         {children}
       </div>

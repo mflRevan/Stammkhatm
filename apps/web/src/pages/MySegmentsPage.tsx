@@ -149,7 +149,9 @@ export function MySegmentsPage() {
             <Card className="animate-fade-in-up bg-gradient-to-r from-primary/5 to-transparent border-primary/10">
               <CardContent className="p-4">
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-sm font-medium">{completedCount} / {claims.length} {t.completed.toLowerCase()}</span>
+                  <span className="text-sm font-medium">
+                    {completedCount} / {claims.length} {t.completed.toLowerCase()}
+                  </span>
                   <span className="text-sm font-bold text-primary">{progressPercent}%</span>
                 </div>
                 <div className="h-2.5 bg-secondary rounded-full overflow-hidden">
@@ -166,9 +168,7 @@ export function MySegmentsPage() {
                 <Card
                   key={claim.id}
                   className={`animate-fade-in transition-all duration-300 hover:-translate-y-0.5 ${
-                    claim.completedAt
-                      ? 'border-green-500/30 bg-green-50/30 dark:bg-green-950/10'
-                      : ''
+                    claim.completedAt ? 'border-green-500/30 bg-green-50/30 dark:bg-green-950/10' : ''
                   }`}
                   style={{ animationDelay: `${i * 50}ms` }}
                 >

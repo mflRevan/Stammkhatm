@@ -14,8 +14,14 @@ export function LandingPage() {
         <div className="absolute top-20 left-10 w-72 h-72 bg-primary/5 rounded-full blur-3xl" />
         <div className="absolute bottom-20 right-10 w-96 h-96 bg-primary/3 rounded-full blur-3xl" />
         <div className="absolute top-1/3 right-1/4 w-2 h-2 bg-primary/30 rounded-full animate-float" />
-        <div className="absolute top-1/2 left-1/5 w-1.5 h-1.5 bg-primary/20 rounded-full animate-float" style={{ animationDelay: '1s' }} />
-        <div className="absolute bottom-1/3 right-1/3 w-1 h-1 bg-primary/25 rounded-full animate-float" style={{ animationDelay: '2s' }} />
+        <div
+          className="absolute top-1/2 left-1/5 w-1.5 h-1.5 bg-primary/20 rounded-full animate-float"
+          style={{ animationDelay: '1s' }}
+        />
+        <div
+          className="absolute bottom-1/3 right-1/3 w-1 h-1 bg-primary/25 rounded-full animate-float"
+          style={{ animationDelay: '2s' }}
+        />
       </div>
 
       <div className="text-center max-w-lg space-y-6 relative z-10">
@@ -27,12 +33,8 @@ export function LandingPage() {
         </div>
 
         {/* Title */}
-        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight animate-fade-in-up stagger-1">
-          {t.landingTitle}
-        </h1>
-        <p className="text-xl text-muted-foreground animate-fade-in-up stagger-2">
-          {t.landingSubtitle}
-        </p>
+        <h1 className="text-4xl sm:text-5xl font-bold tracking-tight animate-fade-in-up stagger-1">{t.landingTitle}</h1>
+        <p className="text-xl text-muted-foreground animate-fade-in-up stagger-2">{t.landingSubtitle}</p>
         <p className="text-sm text-muted-foreground leading-relaxed max-w-md mx-auto animate-fade-in-up stagger-3">
           {t.landingDescription}
         </p>

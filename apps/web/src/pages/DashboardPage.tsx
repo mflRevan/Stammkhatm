@@ -141,14 +141,20 @@ export function DashboardPage() {
             <Card className="hover:shadow-md">
               <CardContent className="p-4 flex flex-col items-center text-center gap-1">
                 <Target className="h-5 w-5 text-primary mb-1" />
-                <span className="text-2xl font-bold">{claimedSegments}<span className="text-sm text-muted-foreground font-normal">/{totalSegments}</span></span>
+                <span className="text-2xl font-bold">
+                  {claimedSegments}
+                  <span className="text-sm text-muted-foreground font-normal">/{totalSegments}</span>
+                </span>
                 <span className="text-xs text-muted-foreground">{t.claimed}</span>
               </CardContent>
             </Card>
             <Card className="hover:shadow-md">
               <CardContent className="p-4 flex flex-col items-center text-center gap-1">
                 <CheckCircle2 className="h-5 w-5 text-green-600 dark:text-green-400 mb-1" />
-                <span className="text-2xl font-bold">{completedSegments}<span className="text-sm text-muted-foreground font-normal">/{totalSegments}</span></span>
+                <span className="text-2xl font-bold">
+                  {completedSegments}
+                  <span className="text-sm text-muted-foreground font-normal">/{totalSegments}</span>
+                </span>
                 <span className="text-xs text-muted-foreground">{t.completed}</span>
               </CardContent>
             </Card>
@@ -166,7 +172,9 @@ export function DashboardPage() {
         {cycle && totalSegments > 0 && (
           <div className="animate-fade-in-up stagger-1">
             <div className="flex items-center justify-between text-xs text-muted-foreground mb-1.5">
-              <span>{completedSegments} / {totalSegments} {t.completed.toLowerCase()}</span>
+              <span>
+                {completedSegments} / {totalSegments} {t.completed.toLowerCase()}
+              </span>
               <span>{progressPercent}%</span>
             </div>
             <div className="h-2 bg-secondary rounded-full overflow-hidden">
@@ -193,9 +201,7 @@ export function DashboardPage() {
                 <Card
                   key={segment.id}
                   className={`animate-fade-in transition-all duration-300 hover:-translate-y-0.5 ${
-                    isGloballyComplete
-                      ? 'border-green-500/30 bg-green-50/30 dark:bg-green-950/10'
-                      : ''
+                    isGloballyComplete ? 'border-green-500/30 bg-green-50/30 dark:bg-green-950/10' : ''
                   }`}
                   style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
                 >
@@ -234,7 +240,9 @@ export function DashboardPage() {
 
                       <div className="flex-shrink-0">
                         {isClaimedByMe ? (
-                          <Badge variant="secondary" className="text-xs">{t.alreadyClaimed}</Badge>
+                          <Badge variant="secondary" className="text-xs">
+                            {t.alreadyClaimed}
+                          </Badge>
                         ) : (
                           <Button size="sm" onClick={() => setClaimModal(segment)} className="group">
                             <BookOpen className="h-4 w-4 mr-1 transition-transform duration-200 group-hover:scale-110" />
