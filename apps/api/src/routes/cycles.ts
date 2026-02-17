@@ -189,7 +189,7 @@ router.get('/current', authMiddleware, async (req: Request, res: Response) => {
 });
 
 // GET /claims/mine
-router.get('/claims/mine', authMiddleware, async (req: Request, res: Response) => {
+router.get('/mine', authMiddleware, async (req: Request, res: Response) => {
   try {
     const userId = req.userId as string;
     const claims = await prisma.claim.findMany({
@@ -257,7 +257,7 @@ router.post('/:id/claim', authMiddleware, async (req: Request, res: Response) =>
 });
 
 // POST /claims/:id/complete
-router.post('/claims/:id/complete', authMiddleware, async (req: Request, res: Response) => {
+router.post('/:id/complete', authMiddleware, async (req: Request, res: Response) => {
   try {
     const claimId = req.params.id as string;
     const userId = req.userId as string;
@@ -289,7 +289,7 @@ router.post('/claims/:id/complete', authMiddleware, async (req: Request, res: Re
 });
 
 // POST /claims/:id/release
-router.post('/claims/:id/release', authMiddleware, async (req: Request, res: Response) => {
+router.post('/:id/release', authMiddleware, async (req: Request, res: Response) => {
   try {
     const claimId = req.params.id as string;
     const userId = req.userId as string;

@@ -129,7 +129,9 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main content */}
-      <main className="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-20 pb-8 animate-fade-in">{children}</main>
+      <main className="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-20 pb-8 animate-fade-in overflow-x-hidden">
+        {children}
+      </main>
     </div>
   );
 }
