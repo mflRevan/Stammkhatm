@@ -270,7 +270,7 @@ export function DashboardPage() {
                   style={{ animationDelay: `${Math.min(i * 30, 300)}ms` }}
                 >
                   <CardContent className="p-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
                       <div className="flex-1 space-y-1.5 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold text-sm">
@@ -302,7 +302,7 @@ export function DashboardPage() {
                         )}
                       </div>
 
-                      <div className="flex-shrink-0">
+                      <div className="flex-shrink-0 w-full sm:w-auto flex flex-wrap items-center gap-2 justify-start sm:justify-end">
                         {isClaimedByMe ? (
                           <Badge variant="secondary" className="text-xs">
                             {t.alreadyClaimed}

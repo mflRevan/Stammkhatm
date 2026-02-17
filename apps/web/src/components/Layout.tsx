@@ -23,7 +23,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   return (
     <div className="min-h-screen bg-background">
       {/* Header */}
-      <header className="sticky top-0 z-40 border-b bg-card/95 backdrop-blur-md supports-[backdrop-filter]:bg-card/60">
+      <header className="fixed top-0 inset-x-0 z-50 border-b border-white/40 bg-card/70 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-card/50 dark:border-white/10">
         <div className="w-full max-w-5xl mx-auto flex h-14 items-center justify-between px-4 sm:px-6">
           <Link to="/dashboard" className="flex items-center gap-2.5 font-bold text-lg group">
             <span className="text-primary font-serif text-xl transition-transform duration-300 group-hover:scale-110">
@@ -91,7 +91,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
 
         {/* Mobile nav */}
         {user && mobileOpen && (
-          <nav className="md:hidden border-t p-4 space-y-1 bg-card animate-slide-down">
+          <nav className="md:hidden border-t border-white/40 p-4 space-y-1 bg-card/80 backdrop-blur-xl animate-slide-down dark:border-white/10">
             {navItems.map((item, i) => (
               <Link
                 key={item.path}
@@ -129,7 +129,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main content */}
-      <main className="w-full max-w-4xl mx-auto px-4 sm:px-6 py-6 animate-fade-in">{children}</main>
+      <main className="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-20 pb-8 animate-fade-in">{children}</main>
     </div>
   );
 }

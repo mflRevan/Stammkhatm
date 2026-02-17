@@ -372,7 +372,7 @@ export function AdminPage() {
                 {overview.cycle.segments.map((segment) => (
                   <div
                     key={segment.id}
-                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-lg border border-border px-3 py-2"
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-lg border border-border px-3 py-2 min-w-0"
                   >
                     <div className="space-y-1">
                       <p className="text-sm font-medium">
@@ -386,7 +386,7 @@ export function AdminPage() {
                             : t.claimed}
                       </p>
                     </div>
-                    <div className="flex items-center gap-2">
+                    <div className="flex flex-wrap items-center gap-2 justify-start sm:justify-end">
                       {segment.status === 'claimed' && (
                         <Button
                           size="sm"

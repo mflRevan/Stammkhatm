@@ -170,7 +170,7 @@ export function MySegmentsPage() {
                   style={{ animationDelay: `${i * 50}ms` }}
                 >
                   <CardContent className="p-4">
-                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
+                    <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 min-w-0">
                       <div className="flex-1 space-y-1.5 min-w-0">
                         <div className="flex items-center gap-2 flex-wrap">
                           <span className="font-semibold text-sm">
@@ -192,13 +192,18 @@ export function MySegmentsPage() {
                         <p className="text-xs text-muted-foreground">{getJuzDisplay(claim.segment.juzSpanJson)}</p>
                       </div>
 
-                      <div className="flex-shrink-0 flex items-center gap-2">
+                      <div className="flex-shrink-0 w-full sm:w-auto flex flex-wrap items-center gap-2 justify-start sm:justify-end">
                         {claim.completedAt ? (
-                          <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
-                            <CheckCircle2 className="h-3.5 w-3.5" />
-                            {t.completedAt}:{' '}
-                            {new Date(claim.completedAt).toLocaleDateString(lang === 'de' ? 'de-DE' : 'en-US')}
-                          </p>
+                          <div className="flex flex-wrap items-center gap-2">
+                            <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
+                              <CheckCircle2 className="h-3.5 w-3.5" />
+                              {t.completedAt}:{' '}
+                              {new Date(claim.completedAt).toLocaleDateString(lang === 'de' ? 'de-DE' : 'en-US')}
+                            </p>
+                            <Button variant="outline" size="sm" onClick={() => setReleaseModal(claim)}>
+                              {t.releaseSegment}
+                            </Button>
+                          </div>
                         ) : (
                           <>
                             <Button size="sm" onClick={() => setCompleteModal(claim)} className="group">

@@ -5,6 +5,7 @@ import App from './App';
 import { AuthProvider } from './context/AuthContext';
 import { I18nProvider } from './context/I18nContext';
 import { ThemeProvider } from './context/ThemeContext';
+import { ToastProvider, ToastViewport } from './components/ui/Toast';
 import './index.css';
 
 ReactDOM.createRoot(document.getElementById('root')!).render(
@@ -13,7 +14,10 @@ ReactDOM.createRoot(document.getElementById('root')!).render(
       <ThemeProvider>
         <I18nProvider>
           <AuthProvider>
-            <App />
+            <ToastProvider>
+              <App />
+              <ToastViewport />
+            </ToastProvider>
           </AuthProvider>
         </I18nProvider>
       </ThemeProvider>

@@ -11,9 +11,9 @@ export function Modal({ open, onClose, children }: ModalProps) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center">
+    <div className="fixed inset-0 z-[100] flex items-center justify-center p-4">
       <div className="fixed inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
-      <div className="relative z-50 w-full max-w-md mx-4 rounded-xl bg-card p-6 shadow-xl border animate-scale-in">
+      <div className="relative z-[110] w-full max-w-md rounded-xl bg-card/95 p-6 shadow-2xl border border-white/40 backdrop-blur-xl animate-scale-in dark:border-white/10">
         {children}
       </div>
     </div>
