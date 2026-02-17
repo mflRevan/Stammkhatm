@@ -21,7 +21,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
   ];
 
   return (
-    <div className="min-h-screen bg-background">
+    <div className="min-h-screen bg-background overflow-x-hidden">
       {/* Header */}
       <header className="fixed top-0 inset-x-0 z-50 border-b border-white/40 bg-card/70 shadow-sm backdrop-blur-xl supports-[backdrop-filter]:bg-card/50 dark:border-white/10">
         <div className="w-full max-w-5xl mx-auto flex h-14 items-center justify-between px-4 sm:px-6">
@@ -129,7 +129,7 @@ export function Layout({ children }: { children: React.ReactNode }) {
       </header>
 
       {/* Main content */}
-      <main className="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-20 pb-8 animate-fade-in overflow-x-hidden">
+      <main className="w-full max-w-4xl mx-auto px-4 sm:px-6 pt-20 pb-8 animate-fade-in overflow-x-hidden min-w-0">
         {children}
       </main>
     </div>

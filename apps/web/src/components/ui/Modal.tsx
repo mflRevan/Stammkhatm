@@ -14,9 +14,9 @@ export function Modal({ open, onClose, children }: ModalProps) {
   if (!portalTarget) return null;
 
   return createPortal(
-    <div className="fixed inset-0 z-[1000] flex items-center justify-center p-4">
+    <div className="fixed inset-0 z-[2000] flex items-center justify-center p-4">
       <div className="absolute inset-0 bg-black/60 backdrop-blur-sm animate-fade-in" onClick={onClose} />
-      <div className="relative z-[1010] w-full max-w-md rounded-xl bg-card/95 p-6 shadow-2xl border border-white/40 backdrop-blur-xl animate-scale-in dark:border-white/10">
+      <div className="relative z-[2010] w-full max-w-md rounded-xl bg-card/95 p-6 shadow-2xl border border-white/40 backdrop-blur-xl animate-scale-in dark:border-white/10">
         {children}
       </div>
     </div>,
