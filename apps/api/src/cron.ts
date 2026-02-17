@@ -52,6 +52,7 @@ function getRandomQuote() {
 
 function buildEmailHtml(
   userName: string,
+  message: string,
   segmentList: string,
   appUrl: string,
   quote: (typeof REMINDER_QUOTES)[0],
@@ -78,15 +79,11 @@ function buildEmailHtml(
     <div style="background:#ffffff;padding:28px 24px;border-left:1px solid #e4e4e7;border-right:1px solid #e4e4e7;">
       <h2 style="margin:0 0 6px;font-size:18px;color:#18181b;">Assalamu Alaikum ${userName} 👋</h2>
       <p style="margin:0 0 20px;font-size:14px;color:#71717a;line-height:1.5;">
-        This is a friendly reminder from <strong style="color:#18181b;">Stammtisch Khatm</strong>. You have the following incomplete segments for this month:
+        ${message}
       </p>
 
       <!-- Segments -->
-      <div style="background:#f9fafb;border:1px solid #e4e4e7;border-radius:12px;padding:16px;margin-bottom:20px;">
-        <table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;">
-          ${segmentList}
-        </table>
-      </div>
+      ${segmentList}
 
       <!-- CTA Button -->
       <div style="text-align:center;margin-bottom:24px;">
@@ -123,8 +120,42 @@ export async function sendReminderEmails(): Promise<number> {
 
   const settings = await prisma.settings.findUnique({ where: { id: 1 } });
   const appUrl = settings?.appUrl || 'http://localhost:5173';
+  const template = settings?.reminderTemplate || 'Assalamu Alaikum [username], please complete [segment_name].';
+  const target = settings?.reminderTarget || 'incomplete-claims';
 
-  // Get all users who have incomplete claims in the current cycle
+  let sentCount = 0;
+
+  if (target === 'unclaimed-users') {
+    const cycle = await prisma.cycle.findUnique({ where: { monthKey } });
+    if (!cycle) return 0;
+
+    const claims = await prisma.claim.findMany({
+      where: { segment: { cycleId: cycle.id } },
+      select: { userId: true },
+    });
+    const claimedIds = new Set(claims.map((c) => c.userId));
+
+    const users = await prisma.user.findMany({
+      where: { emailVerifiedAt: { not: null }, id: { notIn: Array.from(claimedIds) } },
+      select: { id: true, name: true, email: true },
+      orderBy: { name: 'asc' },
+    });
+
+    for (const user of users) {
+      const message = template
+        .replace(/\[username\]/gi, user.name)
+        .replace(/\[segment_name\]/gi, 'an available segment');
+      const quote = getRandomQuote();
+      const html = buildEmailHtml(user.name, message, '', appUrl, quote);
+      await sendEmail(user.email, 'Stammkhatm – Reminder 📖', html);
+      sentCount++;
+    }
+
+    console.log(`📧 Sent ${sentCount} reminder email(s)`);
+    return sentCount;
+  }
+
+  // Default: incomplete claims
   const claims = await prisma.claim.findMany({
     where: {
       completedAt: null,
@@ -138,7 +169,6 @@ export async function sendReminderEmails(): Promise<number> {
     },
   });
 
-  // Group by user
   const byUser = new Map<string, { user: (typeof claims)[0]['user']; segments: (typeof claims)[0]['segment'][] }>();
   for (const claim of claims) {
     if (!byUser.has(claim.userId)) {
@@ -147,10 +177,8 @@ export async function sendReminderEmails(): Promise<number> {
     byUser.get(claim.userId)!.segments.push(claim.segment);
   }
 
-  let sentCount = 0;
   for (const [, { user, segments }] of byUser) {
     const quote = getRandomQuote();
-
     const segmentRows = segments
       .map((s) => {
         const surahs = JSON.parse(s.surahSpanJson);
@@ -168,7 +196,22 @@ export async function sendReminderEmails(): Promise<number> {
       })
       .join('\n');
 
-    const html = buildEmailHtml(user.name, segmentRows, appUrl, quote);
+    const segmentLabel =
+      segments.length === 1 ? `Pages ${segments[0].startPage}–${segments[0].endPage}` : `${segments.length} segments`;
+
+    const message = template
+      .replace(/\[username\]/gi, user.name)
+      .replace(/\[segment_name\]/gi, segmentLabel);
+
+    const listBlock = segmentRows
+      ? `<div style="background:#f9fafb;border:1px solid #e4e4e7;border-radius:12px;padding:16px;margin-bottom:20px;">
+        <table cellpadding="0" cellspacing="0" style="width:100%;border-collapse:collapse;">
+          ${segmentRows}
+        </table>
+      </div>`
+      : '';
+
+    const html = buildEmailHtml(user.name, message, listBlock, appUrl, quote);
 
     await sendEmail(user.email, 'Stammkhatm – Reminder: Incomplete Segments 📖', html);
     sentCount++;

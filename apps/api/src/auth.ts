@@ -39,6 +39,21 @@ export function authMiddleware(req: Request, res: Response, next: NextFunction):
   }
 }
 
+export function optionalAuthMiddleware(req: Request, _res: Response, next: NextFunction): void {
+  const token = req.cookies?.token;
+  if (!token) {
+    next();
+    return;
+  }
+  try {
+    const payload = verifyToken(token);
+    req.userId = payload.userId;
+  } catch {
+    req.userId = undefined;
+  }
+  next();
+}
+
 export async function adminMiddleware(req: Request, res: Response, next: NextFunction): Promise<void> {
   if (!req.userId) {
     res.status(401).json({ error: 'Not authenticated' });
