@@ -5,6 +5,7 @@ interface User {
   id: string;
   name: string;
   email: string;
+  phoneNumber?: string;
 }
 
 interface AuthContextType {
@@ -12,7 +13,7 @@ interface AuthContextType {
   isAdmin: boolean;
   loading: boolean;
   login: (email: string, password: string) => Promise<{ error?: string }>;
-  register: (name: string, email: string, password: string) => Promise<{ error?: string; email?: string }>;
+  register: (name: string, email: string, phoneNumber: string, password: string) => Promise<{ error?: string; email?: string }>;
   verifyOtp: (email: string, code: string) => Promise<{ error?: string }>;
   logout: () => Promise<void>;
   refresh: () => Promise<void>;
@@ -70,9 +71,9 @@ export function AuthProvider({ children }: { children: ReactNode }) {
     }
   };
 
-  const register = async (name: string, email: string, password: string) => {
+  const register = async (name: string, email: string, phoneNumber: string, password: string) => {
     try {
-      const res = await api.post('/auth/register', { name, email, password });
+      const res = await api.post('/auth/register', { name, email, phoneNumber, password });
       const data = await res.json();
       if (!res.ok) return { error: data.error || 'Registration failed' };
       return { email: data.email };
@@ -87,6 +88,7 @@ export function AuthProvider({ children }: { children: ReactNode }) {
       const data = await res.json();
       if (!res.ok) return { error: data.error || 'Verification failed' };
       setUser(data.user);
+      await refresh();
       return {};
     } catch {
       return { error: 'Network error' };

@@ -44,7 +44,7 @@ router.post('/register', authLimiter, async (req: Request, res: Response) => {
       return;
     }
 
-    const { name, email, password } = parsed.data;
+    const { name, email, phoneNumber, password } = parsed.data;
     const normalizedEmail = email.toLowerCase();
 
     // Check if user exists
@@ -58,7 +58,7 @@ router.post('/register', authLimiter, async (req: Request, res: Response) => {
       const passwordHash = await bcrypt.hash(password, 12);
       await prisma.user.update({
         where: { id: existing.id },
-        data: { name, passwordHash },
+        data: { name, phoneNumber, passwordHash },
       });
 
       // Generate and send OTP
@@ -88,7 +88,7 @@ router.post('/register', authLimiter, async (req: Request, res: Response) => {
     // Create user
     const passwordHash = await bcrypt.hash(password, 12);
     const user = await prisma.user.create({
-      data: { name, email: normalizedEmail, passwordHash },
+      data: { name, email: normalizedEmail, phoneNumber, passwordHash },
     });
 
     // Generate OTP
@@ -182,7 +182,7 @@ router.post('/verify-otp', otpLimiter, async (req: Request, res: Response) => {
     res.cookie('token', token, cookieOptions(isProd));
     res.json({
       message: 'Email verified successfully',
-      user: { id: user.id, name: user.name, email: user.email },
+      user: { id: user.id, name: user.name, email: user.email, phoneNumber: user.phoneNumber },
     });
   } catch (err) {
     console.error('Verify OTP error:', err);
@@ -227,7 +227,7 @@ router.post('/login', authLimiter, async (req: Request, res: Response) => {
     const admin = await prisma.admin.findUnique({ where: { email: normalizedEmail } });
 
     res.json({
-      user: { id: user.id, name: user.name, email: user.email },
+      user: { id: user.id, name: user.name, email: user.email, phoneNumber: user.phoneNumber },
       isAdmin: !!admin,
     });
   } catch (err) {
@@ -247,7 +247,7 @@ router.get('/me', authMiddleware, async (req: Request, res: Response) => {
   try {
     const user = await prisma.user.findUnique({
       where: { id: req.userId },
-      select: { id: true, name: true, email: true, emailVerifiedAt: true, createdAt: true },
+      select: { id: true, name: true, email: true, phoneNumber: true, emailVerifiedAt: true, createdAt: true },
     });
     if (!user) {
       res.status(404).json({ error: 'User not found' });

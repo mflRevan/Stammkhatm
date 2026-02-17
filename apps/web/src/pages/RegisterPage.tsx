@@ -13,6 +13,7 @@ export function RegisterPage() {
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
+  const [phoneNumber, setPhoneNumber] = useState('');
   const [password, setPassword] = useState('');
   const [error, setError] = useState('');
   const [loading, setLoading] = useState(false);
@@ -22,7 +23,7 @@ export function RegisterPage() {
     setError('');
     setLoading(true);
 
-    const result = await register(name, email, password);
+    const result = await register(name, email, phoneNumber, password);
     setLoading(false);
 
     if (result.error) {
@@ -70,6 +71,16 @@ export function RegisterPage() {
                 value={email}
                 onChange={(e) => setEmail(e.target.value)}
                 placeholder={t.emailPlaceholder}
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <label className="text-sm font-medium">{t.phoneNumber}</label>
+              <Input
+                type="tel"
+                value={phoneNumber}
+                onChange={(e) => setPhoneNumber(e.target.value)}
+                placeholder={t.phoneNumberPlaceholder}
                 required
               />
             </div>
