@@ -3,6 +3,7 @@ import { prisma } from '../db.js';
 import { authMiddleware } from '../auth.js';
 import { getSurahsForPageRange, getJuzsForPageRange } from '@stammkhatm/shared';
 import { sendEmail } from '../email.js';
+import { Prisma } from '@prisma/client';
 
 const router: Router = Router();
 
@@ -177,6 +178,7 @@ router.get('/current', authMiddleware, async (req: Request, res: Response) => {
         splitEnabled: settings.splitEnabled,
         segmentsPerMonth: settings.segmentsPerMonth,
         totalPages: settings.totalPages,
+        timezone: settings.timezone,
       },
       unclaimedUsers,
     });
@@ -245,6 +247,10 @@ router.post('/:id/claim', authMiddleware, async (req: Request, res: Response) =>
 
     res.status(201).json({ claim });
   } catch (err) {
+    if (err instanceof Prisma.PrismaClientKnownRequestError && err.code === 'P2002') {
+      res.status(409).json({ error: 'Segment already claimed' });
+      return;
+    }
     console.error('Claim error:', err);
     res.status(500).json({ error: 'Internal server error' });
   }
@@ -295,6 +301,10 @@ router.post('/claims/:id/release', authMiddleware, async (req: Request, res: Res
     }
     if (claim.userId !== userId) {
       res.status(403).json({ error: 'Not your claim' });
+      return;
+    }
+    if (claim.completedAt) {
+      res.status(409).json({ error: 'Completed claims cannot be released' });
       return;
     }
 
