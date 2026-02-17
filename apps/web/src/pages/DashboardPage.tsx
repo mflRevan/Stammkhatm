@@ -34,6 +34,7 @@ interface SettingsSummary {
   splitEnabled: boolean;
   segmentsPerMonth: number;
   totalPages: number;
+  timezone?: string;
 }
 
 interface UnclaimedUser {
@@ -95,13 +96,32 @@ export function DashboardPage() {
     });
   };
 
-  const getTimeLeft = (monthKey: string) => {
+  const getTimeLeft = (monthKey: string, timeZone?: string) => {
     const [year, month] = monthKey.split('-');
     const monthIndex = parseInt(month) - 1;
+    const safeTz = timeZone || 'UTC';
+
+    const getNowInTz = () => {
+      try {
+        const parts = new Intl.DateTimeFormat('en-US', {
+          timeZone: safeTz,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        }).formatToParts(new Date());
+        const y = parts.find((p) => p.type === 'year')?.value;
+        const m = parts.find((p) => p.type === 'month')?.value;
+        const d = parts.find((p) => p.type === 'day')?.value;
+        if (!y || !m || !d) return new Date();
+        return new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+      } catch {
+        return new Date();
+      }
+    };
+
     const endDate = new Date(parseInt(year), monthIndex + 1, 0, 23, 59, 59);
-    const diffMs = endDate.getTime() - Date.now();
-    const diffDays = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
-    return diffDays;
+    const diffMs = endDate.getTime() - getNowInTz().getTime();
+    return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
   };
 
   const getSurahDisplay = (json: string) => {
@@ -193,7 +213,7 @@ export function DashboardPage() {
             <Card className="hover:shadow-md">
               <CardContent className="p-4 flex flex-col items-center text-center gap-1">
                 <Clock className="h-5 w-5 text-primary mb-1" />
-                <span className="text-2xl font-bold">{cycle ? getTimeLeft(cycle.monthKey) : 0}</span>
+                <span className="text-2xl font-bold">{cycle ? getTimeLeft(cycle.monthKey, settings?.timezone) : 0}</span>
                 <span className="text-xs text-muted-foreground">{t.daysLeft}</span>
               </CardContent>
             </Card>

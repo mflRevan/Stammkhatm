@@ -227,11 +227,31 @@ export function AdminPage() {
     });
   };
 
-  const getTimeLeft = (monthKey: string) => {
+  const getTimeLeft = (monthKey: string, timeZone?: string) => {
     const [year, month] = monthKey.split('-');
     const monthIndex = parseInt(month) - 1;
+    const safeTz = timeZone || 'UTC';
+
+    const getNowInTz = () => {
+      try {
+        const parts = new Intl.DateTimeFormat('en-US', {
+          timeZone: safeTz,
+          year: 'numeric',
+          month: '2-digit',
+          day: '2-digit',
+        }).formatToParts(new Date());
+        const y = parts.find((p) => p.type === 'year')?.value;
+        const m = parts.find((p) => p.type === 'month')?.value;
+        const d = parts.find((p) => p.type === 'day')?.value;
+        if (!y || !m || !d) return new Date();
+        return new Date(parseInt(y), parseInt(m) - 1, parseInt(d));
+      } catch {
+        return new Date();
+      }
+    };
+
     const endDate = new Date(parseInt(year), monthIndex + 1, 0, 23, 59, 59);
-    const diffMs = endDate.getTime() - Date.now();
+    const diffMs = endDate.getTime() - getNowInTz().getTime();
     return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
   };
 
@@ -289,7 +309,7 @@ export function AdminPage() {
                   </div>
                   <div className="text-right">
                     <p className="text-2xl font-bold text-primary">{progressPercent}%</p>
-                    <p className="text-xs text-muted-foreground">{getTimeLeft(overview.cycle.monthKey)} {t.daysLeft}</p>
+                    <p className="text-xs text-muted-foreground">{getTimeLeft(overview.cycle.monthKey, settings?.timezone)} {t.daysLeft}</p>
                   </div>
                 </div>
                 <div className="h-2 bg-secondary rounded-full overflow-hidden">

@@ -234,8 +234,22 @@ export function startCron() {
       const settings = await prisma.settings.findUnique({ where: { id: 1 } });
       if (!settings) return;
 
-      const today = new Date();
-      const dayOfMonth = today.getDate();
+      const getDayInTimeZone = (timeZone: string) => {
+        try {
+          const parts = new Intl.DateTimeFormat('en-US', {
+            timeZone,
+            year: 'numeric',
+            month: '2-digit',
+            day: '2-digit',
+          }).formatToParts(new Date());
+          const day = parts.find((p) => p.type === 'day')?.value;
+          return day ? parseInt(day, 10) : new Date().getDate();
+        } catch {
+          return new Date().getDate();
+        }
+      };
+
+      const dayOfMonth = getDayInTimeZone(settings.timezone || 'UTC');
 
       // Send on every reminderIntervalDays
       if (dayOfMonth % settings.reminderIntervalDays === 0 || dayOfMonth === 1) {
