@@ -19,28 +19,64 @@ import {
   Link as LinkIcon,
   AlertTriangle,
   CheckCircle2,
+  Users,
+  Mail,
 } from 'lucide-react';
 
 interface Settings {
   totalPages: number;
   segmentsPerMonth: number;
+  splitEnabled: boolean;
   reminderIntervalDays: number;
+  reminderTarget: 'incomplete-claims' | 'unclaimed-users';
+  reminderTemplate: string;
   timezone: string;
   appUrl: string;
+}
+
+interface OverviewSegment {
+  id: string;
+  index: number;
+  startPage: number;
+  endPage: number;
+  surahSpanJson: string;
+  juzSpanJson: string;
+  status: 'unclaimed' | 'claimed' | 'completed';
+}
+
+interface OverviewUser {
+  id: string;
+  name: string;
+  email: string;
+}
+
+interface OverviewData {
+  cycle: {
+    monthKey: string;
+    segments: OverviewSegment[];
+  };
+  unclaimedUsers: OverviewUser[];
 }
 
 export function AdminPage() {
   const { t } = useI18n();
   const [settings, setSettings] = useState<Settings | null>(null);
+  const [overview, setOverview] = useState<OverviewData | null>(null);
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
   const [message, setMessage] = useState('');
   const [regenerateModal, setRegenerateModal] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
   const [sendingReminders, setSendingReminders] = useState(false);
+  const [reminderModal, setReminderModal] = useState<OverviewSegment | null>(null);
+  const [reminderText, setReminderText] = useState('');
+  const [reminderChannel, setReminderChannel] = useState('email');
+  const [sendingSegmentReminder, setSendingSegmentReminder] = useState(false);
+  const [sendingUnclaimed, setSendingUnclaimed] = useState(false);
 
   useEffect(() => {
     fetchSettings();
+    fetchOverview();
   }, []);
 
   const fetchSettings = async () => {
@@ -54,6 +90,18 @@ export function AdminPage() {
       console.error(err);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const fetchOverview = async () => {
+    try {
+      const res = await api.get('/admin/overview');
+      if (res.ok) {
+        const data = await res.json();
+        setOverview(data);
+      }
+    } catch (err) {
+      console.error(err);
     }
   };
 
@@ -81,6 +129,7 @@ export function AdminPage() {
       if (res.ok) {
         setMessage(t.regenerated);
         setRegenerateModal(false);
+        await fetchOverview();
         setTimeout(() => setMessage(''), 3000);
       }
     } catch (err) {
@@ -105,6 +154,91 @@ export function AdminPage() {
       setSendingReminders(false);
     }
   };
+
+  const handleSendSegmentReminder = async () => {
+    if (!reminderModal) return;
+    setSendingSegmentReminder(true);
+    try {
+      const res = await api.post('/admin/reminders/segment', {
+        segmentId: reminderModal.id,
+        message: reminderText,
+        channel: reminderChannel,
+      });
+      if (res.ok) {
+        setMessage(t.reminderSent);
+        setReminderModal(null);
+        setReminderText('');
+        setTimeout(() => setMessage(''), 3000);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSendingSegmentReminder(false);
+    }
+  };
+
+  const handleSendUnclaimedReminders = async () => {
+    setSendingUnclaimed(true);
+    try {
+      const res = await api.post('/admin/reminders/unclaimed', {
+        message: reminderText || settings?.reminderTemplate || t.reminderDefault,
+        channel: reminderChannel,
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMessage(data.message || t.reminderSent);
+        setReminderText('');
+        setTimeout(() => setMessage(''), 3000);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSendingUnclaimed(false);
+    }
+  };
+
+  const handleSendReminderToUser = async (userId: string) => {
+    setSendingUnclaimed(true);
+    try {
+      const res = await api.post('/admin/reminders/unclaimed', {
+        message: reminderText || settings?.reminderTemplate || t.reminderDefault,
+        channel: reminderChannel,
+        userIds: [userId],
+      });
+      if (res.ok) {
+        const data = await res.json();
+        setMessage(data.message || t.reminderSent);
+        setReminderText('');
+        setTimeout(() => setMessage(''), 3000);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setSendingUnclaimed(false);
+    }
+  };
+
+  const formatMonth = (monthKey: string) => {
+    const [year, month] = monthKey.split('-');
+    const date = new Date(parseInt(year), parseInt(month) - 1);
+    return date.toLocaleDateString('de-DE', {
+      year: 'numeric',
+      month: 'long',
+    });
+  };
+
+  const getTimeLeft = (monthKey: string) => {
+    const [year, month] = monthKey.split('-');
+    const monthIndex = parseInt(month) - 1;
+    const endDate = new Date(parseInt(year), monthIndex + 1, 0, 23, 59, 59);
+    const diffMs = endDate.getTime() - Date.now();
+    return Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+  };
+
+  const totalSegments = overview?.cycle.segments.length ?? 0;
+  const completedSegments = overview?.cycle.segments.filter((s) => s.status === 'completed').length ?? 0;
+  const claimedSegments = overview?.cycle.segments.filter((s) => s.status !== 'unclaimed').length ?? 0;
+  const progressPercent = totalSegments > 0 ? Math.round((completedSegments / totalSegments) * 100) : 0;
 
   if (loading) {
     return (
@@ -139,6 +273,147 @@ export function AdminPage() {
             <CheckCircle2 className="h-4 w-4 flex-shrink-0" />
             {message}
           </div>
+        )}
+
+        {/* Overview */}
+        {overview && (
+          <div className="space-y-4 animate-fade-in-up">
+            <Card className="bg-gradient-to-r from-primary/5 to-transparent border-primary/10">
+              <CardContent className="p-4 space-y-3">
+                <div className="flex items-center justify-between text-sm">
+                  <div>
+                    <p className="font-semibold">{t.currentMonth}: {formatMonth(overview.cycle.monthKey)}</p>
+                    <p className="text-xs text-muted-foreground">
+                      {claimedSegments}/{totalSegments} {t.claimed} • {completedSegments}/{totalSegments} {t.completed.toLowerCase()}
+                    </p>
+                  </div>
+                  <div className="text-right">
+                    <p className="text-2xl font-bold text-primary">{progressPercent}%</p>
+                    <p className="text-xs text-muted-foreground">{getTimeLeft(overview.cycle.monthKey)} {t.daysLeft}</p>
+                  </div>
+                </div>
+                <div className="h-2 bg-secondary rounded-full overflow-hidden">
+                  <div
+                    className="h-full bg-gradient-to-r from-primary to-green-500 rounded-full transition-all duration-700 ease-out"
+                    style={{ width: `${progressPercent}%` }}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-2">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Users className="h-4 w-4 text-muted-foreground" />
+                  {t.unclaimedUsers}
+                </CardTitle>
+                <CardDescription>{t.unclaimedUsersDesc}</CardDescription>
+              </CardHeader>
+              <CardContent className="space-y-3">
+                {overview.unclaimedUsers.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t.everyoneClaimed}</p>
+                ) : (
+                  <div className="space-y-2">
+                    {overview.unclaimedUsers.map((u) => (
+                      <div key={u.id} className="flex items-center justify-between gap-2">
+                        <Badge variant="outline" className="text-xs">
+                          {u.name}
+                        </Badge>
+                        <Button variant="outline" size="sm" onClick={() => handleSendReminderToUser(u.id)}>
+                          {t.sendReminder}
+                        </Button>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                <div className="space-y-2">
+                  <textarea
+                    className="w-full min-h-[80px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+                    placeholder={t.reminderMessagePlaceholder}
+                    value={reminderText}
+                    onChange={(e) => setReminderText(e.target.value)}
+                  />
+                  <div className="flex flex-wrap gap-2">
+                    <Button
+                      onClick={handleSendUnclaimedReminders}
+                      disabled={sendingUnclaimed || overview.unclaimedUsers.length === 0}
+                    >
+                      {sendingUnclaimed ? t.loading : t.remindUnclaimed}
+                    </Button>
+                    <select
+                      className="rounded-md border border-input bg-background px-3 py-2 text-sm"
+                      value={reminderChannel}
+                      onChange={(e) => setReminderChannel(e.target.value)}
+                    >
+                      <option value="email">Email</option>
+                      <option value="whatsapp" disabled>
+                        WhatsApp (soon)
+                      </option>
+                    </select>
+                  </div>
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
+        {/* Segments status */}
+        {overview && (
+          <Card className="animate-fade-in-up">
+            <CardHeader className="pb-2">
+              <CardTitle className="text-lg flex items-center gap-2">
+                <BookOpen className="h-4 w-4 text-muted-foreground" />
+                {t.segmentStatus}
+              </CardTitle>
+              <CardDescription>{t.segmentStatusDesc}</CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-3">
+              <div className="grid gap-2">
+                {overview.cycle.segments.map((segment) => (
+                  <div
+                    key={segment.id}
+                    className="flex flex-col sm:flex-row sm:items-center justify-between gap-2 rounded-lg border border-border px-3 py-2"
+                  >
+                    <div className="space-y-1">
+                      <p className="text-sm font-medium">
+                        {t.segment} {segment.index + 1} • {t.pages}: {segment.startPage}–{segment.endPage}
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        {segment.status === 'unclaimed'
+                          ? t.unclaimed
+                          : segment.status === 'completed'
+                            ? t.completed
+                            : t.claimed}
+                      </p>
+                    </div>
+                    <div className="flex items-center gap-2">
+                      {segment.status === 'claimed' && (
+                        <Button
+                          size="sm"
+                          onClick={() => {
+                            setReminderModal(segment);
+                            setReminderText(settings?.reminderTemplate || t.reminderDefault);
+                          }}
+                        >
+                          {t.sendReminder}
+                        </Button>
+                      )}
+                      {segment.status === 'unclaimed' && (
+                        <Badge variant="outline" className="text-xs">
+                          {t.unclaimed}
+                        </Badge>
+                      )}
+                      {segment.status === 'completed' && (
+                        <Badge variant="success" className="text-xs">
+                          {t.completed}
+                        </Badge>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
         )}
 
         {/* Settings */}
@@ -183,6 +458,20 @@ export function AdminPage() {
                   </div>
                   <div className="space-y-2">
                     <label className="text-sm font-medium flex items-center gap-1.5">
+                      <Zap className="h-3.5 w-3.5 text-muted-foreground" />
+                      {t.splitEnabled}
+                    </label>
+                    <label className="flex items-center gap-2 text-sm text-muted-foreground">
+                      <input
+                        type="checkbox"
+                        checked={settings.splitEnabled}
+                        onChange={(e) => setSettings({ ...settings, splitEnabled: e.target.checked })}
+                      />
+                      {settings.splitEnabled ? t.splitActive : t.splitDisabled}
+                    </label>
+                  </div>
+                  <div className="space-y-2">
+                    <label className="text-sm font-medium flex items-center gap-1.5">
                       <Clock className="h-3.5 w-3.5 text-muted-foreground" />
                       {t.reminderIntervalDays}
                     </label>
@@ -217,6 +506,34 @@ export function AdminPage() {
                     value={settings.appUrl}
                     onChange={(e) => setSettings({ ...settings, appUrl: e.target.value })}
                   />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium flex items-center gap-1.5">
+                    <Mail className="h-3.5 w-3.5 text-muted-foreground" />
+                    {t.reminderTarget}
+                  </label>
+                  <select
+                    className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm"
+                    value={settings.reminderTarget}
+                    onChange={(e) =>
+                      setSettings({
+                        ...settings,
+                        reminderTarget: e.target.value as Settings['reminderTarget'],
+                      })
+                    }
+                  >
+                    <option value="incomplete-claims">{t.reminderTargetClaims}</option>
+                    <option value="unclaimed-users">{t.reminderTargetUnclaimed}</option>
+                  </select>
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium">{t.reminderTemplate}</label>
+                  <textarea
+                    className="w-full min-h-[90px] rounded-md border border-input bg-background px-3 py-2 text-sm shadow-sm"
+                    value={settings.reminderTemplate}
+                    onChange={(e) => setSettings({ ...settings, reminderTemplate: e.target.value })}
+                  />
+                  <p className="text-xs text-muted-foreground">{t.reminderTemplateHint}</p>
                 </div>
                 <div className="pt-2">
                   <Button onClick={handleSave} disabled={saving} className="group">
@@ -272,6 +589,37 @@ export function AdminPage() {
           </CardContent>
         </Card>
       </div>
+
+      {/* Segment Reminder Modal */}
+      <Modal open={!!reminderModal} onClose={() => setReminderModal(null)}>
+        <ModalTitle className="text-center">{t.sendReminder}</ModalTitle>
+        <ModalDescription className="text-center">{t.reminderModalDesc}</ModalDescription>
+        <div className="space-y-3 mt-4">
+          <textarea
+            className="w-full min-h-[120px] rounded-md border border-input bg-background px-3 py-2 text-sm"
+            value={reminderText}
+            onChange={(e) => setReminderText(e.target.value)}
+          />
+          <select
+            className="w-full rounded-md border border-input bg-background px-3 py-2 text-sm"
+            value={reminderChannel}
+            onChange={(e) => setReminderChannel(e.target.value)}
+          >
+            <option value="email">Email</option>
+            <option value="whatsapp" disabled>
+              WhatsApp (soon)
+            </option>
+          </select>
+        </div>
+        <ModalFooter>
+          <Button variant="outline" onClick={() => setReminderModal(null)}>
+            {t.cancel}
+          </Button>
+          <Button onClick={handleSendSegmentReminder} disabled={sendingSegmentReminder}>
+            {sendingSegmentReminder ? t.loading : t.sendReminder}
+          </Button>
+        </ModalFooter>
+      </Modal>
 
       {/* Regenerate Modal */}
       <Modal open={regenerateModal} onClose={() => setRegenerateModal(false)}>

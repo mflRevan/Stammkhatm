@@ -31,33 +31,15 @@ export function MySegmentsPage() {
   const [loading, setLoading] = useState(true);
   const [completeModal, setCompleteModal] = useState<Claim | null>(null);
   const [completing, setCompleting] = useState(false);
+  const [releaseModal, setReleaseModal] = useState<Claim | null>(null);
+  const [releasing, setReleasing] = useState(false);
 
   const fetchClaims = async () => {
     try {
-      const res = await api.get('/cycles/current');
+      const res = await api.get('/claims/mine');
       if (res.ok) {
         const data = await res.json();
-        const userClaims: Claim[] = [];
-        for (const segment of data.cycle?.segments || []) {
-          for (const claim of segment.claims) {
-            if (claim.user.id === user?.id) {
-              userClaims.push({
-                id: claim.id,
-                claimedAt: claim.claimedAt,
-                completedAt: claim.completedAt,
-                segment: {
-                  id: segment.id,
-                  index: segment.index,
-                  startPage: segment.startPage,
-                  endPage: segment.endPage,
-                  surahSpanJson: segment.surahSpanJson,
-                  juzSpanJson: segment.juzSpanJson,
-                },
-              });
-            }
-          }
-        }
-        setClaims(userClaims);
+        setClaims(data.claims || []);
       }
     } catch (err) {
       console.error(err);
@@ -82,6 +64,21 @@ export function MySegmentsPage() {
       console.error(err);
     } finally {
       setCompleting(false);
+    }
+  };
+
+  const handleRelease = async (claim: Claim) => {
+    setReleasing(true);
+    try {
+      const res = await api.post(`/claims/${claim.id}/release`, {});
+      if (res.ok) {
+        await fetchClaims();
+        setReleaseModal(null);
+      }
+    } catch (err) {
+      console.error(err);
+    } finally {
+      setReleasing(false);
     }
   };
 
@@ -195,7 +192,7 @@ export function MySegmentsPage() {
                         <p className="text-xs text-muted-foreground">{getJuzDisplay(claim.segment.juzSpanJson)}</p>
                       </div>
 
-                      <div className="flex-shrink-0">
+                      <div className="flex-shrink-0 flex items-center gap-2">
                         {claim.completedAt ? (
                           <p className="text-xs text-green-600 dark:text-green-400 flex items-center gap-1">
                             <CheckCircle2 className="h-3.5 w-3.5" />
@@ -203,10 +200,15 @@ export function MySegmentsPage() {
                             {new Date(claim.completedAt).toLocaleDateString(lang === 'de' ? 'de-DE' : 'en-US')}
                           </p>
                         ) : (
-                          <Button size="sm" onClick={() => setCompleteModal(claim)} className="group">
-                            <CheckCircle2 className="h-4 w-4 mr-1 transition-transform duration-200 group-hover:scale-110" />
-                            {t.markComplete}
-                          </Button>
+                          <>
+                            <Button size="sm" onClick={() => setCompleteModal(claim)} className="group">
+                              <CheckCircle2 className="h-4 w-4 mr-1 transition-transform duration-200 group-hover:scale-110" />
+                              {t.markComplete}
+                            </Button>
+                            <Button variant="outline" size="sm" onClick={() => setReleaseModal(claim)}>
+                              {t.releaseSegment}
+                            </Button>
+                          </>
                         )}
                       </div>
                     </div>
@@ -238,6 +240,30 @@ export function MySegmentsPage() {
           </Button>
           <Button onClick={() => completeModal && handleComplete(completeModal)} disabled={completing}>
             {completing ? t.loading : t.completeConfirm}
+          </Button>
+        </ModalFooter>
+      </Modal>
+
+      {/* Release Modal */}
+      <Modal open={!!releaseModal} onClose={() => setReleaseModal(null)}>
+        <div className="flex justify-center mb-3">
+          <div className="w-12 h-12 rounded-xl bg-destructive/10 flex items-center justify-center">
+            <Sparkles className="h-6 w-6 text-destructive" />
+          </div>
+        </div>
+        <ModalTitle className="text-center">{t.releaseTitle}</ModalTitle>
+        <ModalDescription className="text-center">
+          {releaseModal &&
+            t.releaseWarning
+              .replace('{start}', String(releaseModal.segment.startPage))
+              .replace('{end}', String(releaseModal.segment.endPage))}
+        </ModalDescription>
+        <ModalFooter>
+          <Button variant="outline" onClick={() => setReleaseModal(null)}>
+            {t.cancel}
+          </Button>
+          <Button variant="destructive" onClick={() => releaseModal && handleRelease(releaseModal)} disabled={releasing}>
+            {releasing ? t.loading : t.releaseConfirm}
           </Button>
         </ModalFooter>
       </Modal>

@@ -7,7 +7,7 @@ import { Card, CardContent } from '@/components/ui/Card';
 import { Badge } from '@/components/ui/Badge';
 import { Modal, ModalTitle, ModalDescription, ModalFooter } from '@/components/ui/Modal';
 import { Layout } from '@/components/Layout';
-import { BookOpen, Users, CheckCircle2, TrendingUp, Target, Sparkles } from 'lucide-react';
+import { BookOpen, Users, CheckCircle2, TrendingUp, Target, Sparkles, Clock } from 'lucide-react';
 
 interface Segment {
   id: string;
@@ -16,11 +16,12 @@ interface Segment {
   endPage: number;
   surahSpanJson: string;
   juzSpanJson: string;
-  claims: {
+  claim: {
     id: string;
+    claimedAt: string;
     completedAt: string | null;
-    user: { id: string; name: string };
-  }[];
+    isMine: boolean;
+  } | null;
 }
 
 interface Cycle {
@@ -29,10 +30,23 @@ interface Cycle {
   segments: Segment[];
 }
 
+interface SettingsSummary {
+  splitEnabled: boolean;
+  segmentsPerMonth: number;
+  totalPages: number;
+}
+
+interface UnclaimedUser {
+  id: string;
+  name: string;
+}
+
 export function DashboardPage() {
   const { user } = useAuth();
   const { t, lang } = useI18n();
   const [cycle, setCycle] = useState<Cycle | null>(null);
+  const [settings, setSettings] = useState<SettingsSummary | null>(null);
+  const [unclaimedUsers, setUnclaimedUsers] = useState<UnclaimedUser[]>([]);
   const [loading, setLoading] = useState(true);
   const [claimModal, setClaimModal] = useState<Segment | null>(null);
   const [claiming, setClaiming] = useState(false);
@@ -43,6 +57,8 @@ export function DashboardPage() {
       if (res.ok) {
         const data = await res.json();
         setCycle(data.cycle);
+        setSettings(data.settings);
+        setUnclaimedUsers(data.unclaimedUsers || []);
       }
     } catch (err) {
       console.error(err);
@@ -79,6 +95,15 @@ export function DashboardPage() {
     });
   };
 
+  const getTimeLeft = (monthKey: string) => {
+    const [year, month] = monthKey.split('-');
+    const monthIndex = parseInt(month) - 1;
+    const endDate = new Date(parseInt(year), monthIndex + 1, 0, 23, 59, 59);
+    const diffMs = endDate.getTime() - Date.now();
+    const diffDays = Math.max(0, Math.ceil(diffMs / (1000 * 60 * 60 * 24)));
+    return diffDays;
+  };
+
   const getSurahDisplay = (json: string) => {
     try {
       const surahs = JSON.parse(json);
@@ -103,8 +128,8 @@ export function DashboardPage() {
 
   // Compute stats
   const totalSegments = cycle?.segments.length ?? 0;
-  const claimedSegments = cycle?.segments.filter((s) => s.claims.length > 0).length ?? 0;
-  const completedSegments = cycle?.segments.filter((s) => s.claims.some((c) => c.completedAt)).length ?? 0;
+  const claimedSegments = cycle?.segments.filter((s) => !!s.claim).length ?? 0;
+  const completedSegments = cycle?.segments.filter((s) => s.claim?.completedAt).length ?? 0;
   const progressPercent = totalSegments > 0 ? Math.round((completedSegments / totalSegments) * 100) : 0;
 
   if (loading) {
@@ -137,7 +162,7 @@ export function DashboardPage() {
 
         {/* Stats overview */}
         {cycle && (
-          <div className="grid grid-cols-3 gap-3 animate-fade-in-up">
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-3 animate-fade-in-up">
             <Card className="hover:shadow-md">
               <CardContent className="p-4 flex flex-col items-center text-center gap-1">
                 <Target className="h-5 w-5 text-primary mb-1" />
@@ -165,6 +190,13 @@ export function DashboardPage() {
                 <span className="text-xs text-muted-foreground">Khatm</span>
               </CardContent>
             </Card>
+            <Card className="hover:shadow-md">
+              <CardContent className="p-4 flex flex-col items-center text-center gap-1">
+                <Clock className="h-5 w-5 text-primary mb-1" />
+                <span className="text-2xl font-bold">{cycle ? getTimeLeft(cycle.monthKey) : 0}</span>
+                <span className="text-xs text-muted-foreground">{t.daysLeft}</span>
+              </CardContent>
+            </Card>
           </div>
         )}
 
@@ -186,6 +218,38 @@ export function DashboardPage() {
           </div>
         )}
 
+        {settings && (
+          <div className="grid gap-3 sm:grid-cols-2 animate-fade-in-up stagger-1">
+            <Card className="hover:shadow-md">
+              <CardContent className="p-4 space-y-1">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">{t.splitStatus}</p>
+                <p className="text-sm font-semibold">
+                  {settings.splitEnabled ? t.splitActive : t.splitDisabled}
+                </p>
+                <p className="text-xs text-muted-foreground">
+                  {t.segmentsPerMonth}: {settings.segmentsPerMonth} • {t.totalPages}: {settings.totalPages}
+                </p>
+              </CardContent>
+            </Card>
+            <Card className="hover:shadow-md">
+              <CardContent className="p-4 space-y-2">
+                <p className="text-xs uppercase tracking-wide text-muted-foreground">{t.unclaimedUsers}</p>
+                {unclaimedUsers.length === 0 ? (
+                  <p className="text-sm text-muted-foreground">{t.everyoneClaimed}</p>
+                ) : (
+                  <div className="flex flex-wrap gap-2">
+                    {unclaimedUsers.map((u) => (
+                      <Badge key={u.id} variant="outline" className="text-xs">
+                        {u.name}
+                      </Badge>
+                    ))}
+                  </div>
+                )}
+              </CardContent>
+            </Card>
+          </div>
+        )}
+
         {/* Segments list */}
         {!cycle ? (
           <Card>
@@ -194,8 +258,8 @@ export function DashboardPage() {
         ) : (
           <div className="grid gap-3">
             {cycle.segments.map((segment, i) => {
-              const isClaimedByMe = segment.claims.some((c) => c.user.id === user?.id);
-              const isGloballyComplete = segment.claims.some((c) => c.completedAt);
+              const isClaimedByMe = segment.claim?.isMine;
+              const isGloballyComplete = !!segment.claim?.completedAt;
 
               return (
                 <Card
@@ -228,11 +292,11 @@ export function DashboardPage() {
                         <p className="text-xs text-muted-foreground">
                           {t.juz}: {getJuzDisplay(segment.juzSpanJson)}
                         </p>
-                        {segment.claims.length > 0 && (
+                        {segment.claim && (
                           <div className="flex items-center gap-1.5 text-xs text-muted-foreground">
                             <Users className="h-3 w-3 flex-shrink-0" />
                             <span className="truncate">
-                              {segment.claims.length} {t.claimed}: {segment.claims.map((c) => c.user.name).join(', ')}
+                              {isGloballyComplete ? t.completed : t.claimed}
                             </span>
                           </div>
                         )}
@@ -242,6 +306,10 @@ export function DashboardPage() {
                         {isClaimedByMe ? (
                           <Badge variant="secondary" className="text-xs">
                             {t.alreadyClaimed}
+                          </Badge>
+                        ) : segment.claim ? (
+                          <Badge variant="outline" className="text-xs">
+                            {t.segmentTaken}
                           </Badge>
                         ) : (
                           <Button size="sm" onClick={() => setClaimModal(segment)} className="group">
