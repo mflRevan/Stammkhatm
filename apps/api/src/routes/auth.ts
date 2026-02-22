@@ -5,6 +5,7 @@ import { registerSchema, verifyOtpSchema, loginSchema } from '@stammkhatm/shared
 import { prisma } from '../db.js';
 import { signToken, authMiddleware } from '../auth.js';
 import { sendEmail } from '../email.js';
+import { sendWhatsappMessage } from '../whatsapp.js';
 
 const router: Router = Router();
 
@@ -69,7 +70,7 @@ router.post('/register', authLimiter, async (req: Request, res: Response) => {
           email: normalizedEmail,
           userId: existing.id,
           codeHash,
-          expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+          expiresAt: new Date(Date.now() + 10 * 60 * 1000),
         },
       });
 
@@ -78,10 +79,15 @@ router.post('/register', authLimiter, async (req: Request, res: Response) => {
         'Stammkhatm – Verify Your Email',
         `<h2>Welcome to Stammkhatm!</h2>
         <p>Your verification code is: <strong>${code}</strong></p>
-        <p>This code expires in 15 minutes.</p>`,
+        <p>This code expires in 10 minutes.</p>`,
       );
 
-      res.json({ message: 'OTP sent to your email', email: normalizedEmail });
+      await sendWhatsappMessage(
+        phoneNumber,
+        `Stammkhatm verification code: ${code} (valid 10 minutes)`,
+      );
+
+      res.json({ message: 'OTP sent', email: normalizedEmail });
       return;
     }
 
@@ -99,7 +105,7 @@ router.post('/register', authLimiter, async (req: Request, res: Response) => {
         email: normalizedEmail,
         userId: user.id,
         codeHash,
-        expiresAt: new Date(Date.now() + 15 * 60 * 1000),
+        expiresAt: new Date(Date.now() + 10 * 60 * 1000),
       },
     });
 
@@ -108,10 +114,15 @@ router.post('/register', authLimiter, async (req: Request, res: Response) => {
       'Stammkhatm – Verify Your Email',
       `<h2>Welcome to Stammkhatm!</h2>
       <p>Your verification code is: <strong>${code}</strong></p>
-      <p>This code expires in 15 minutes.</p>`,
+      <p>This code expires in 10 minutes.</p>`,
     );
 
-    res.status(201).json({ message: 'OTP sent to your email', email: normalizedEmail });
+    await sendWhatsappMessage(
+      phoneNumber,
+      `Stammkhatm verification code: ${code} (valid 10 minutes)`,
+    );
+
+    res.status(201).json({ message: 'OTP sent', email: normalizedEmail });
   } catch (err) {
     console.error('Register error:', err);
     res.status(500).json({ error: 'Internal server error' });
